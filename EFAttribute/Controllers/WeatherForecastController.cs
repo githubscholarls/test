@@ -1,0 +1,85 @@
+using EFAttribute.Domain.Entity;
+using EFAttribute.MyDbContext;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace EFAttribute.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]/[action]")]
+    public class WeatherForecastController : ControllerBase
+    {
+        private static readonly string[] Summaries = new[]
+        {
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        };
+
+        private readonly ILogger<WeatherForecastController> _logger;
+        private TestDbContext dbContext;
+
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, TestDbContext testDbContext)
+        {
+            _logger = logger;
+            dbContext = testDbContext;
+        }
+
+        [HttpGet(Name = "GetWeatherForecast")]
+        public IEnumerable<WeatherForecast> Get()
+        {
+            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            {
+                Date = DateTime.Now.AddDays(index),
+                TemperatureC = Random.Shared.Next(-20, 55),
+                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            })
+            .ToArray();
+        }
+
+        [HttpPost]
+        public IActionResult ExecuteSql()
+        {
+            var list = dbContext.user.ToList();
+            //实用技巧
+            {
+                //1：按住  alt 鼠标左键选择区域复制粘贴代码
+                //2：右侧  滑动按钮上 设置下   可以将同一个代码分两个屏幕    不用再qq钉在桌面
+                //3：https://dotnet.microsoft.com/en-us/download/intellisense   汉化智能提示   https://blog.csdn.net/xjj800211/article/details/112657800
+            }
+            //execute
+            {
+                //直接更新数据(分表后好像不可了，报客户端)
+                //dbContext.user.Where(u => u.id > 0).ExecuteUpdate(u => u.SetProperty(f => f.lastLoginTime, f => DateTime.Now.ToString()));
+                //dbContext.user.Where(u => u.id == 2).ExecuteUpdate(u => u.SetProperty(f => f.nowAddress, f => "executeUpdate Address"));
+            }
+            //拆表
+            {
+                //insert
+                var usr = new user()
+                {
+                    name = "lishuai",
+                    sex = "nan",
+                    schoolAddress = "zhengzhou",
+                    bornAddress = "henan"
+                };
+                dbContext.Add(usr);
+                dbContext.SaveChanges();
+
+                //select 注意不同表是否都有同一列为相同值，拆表后查询为inner
+                var ls = (from u in dbContext.user where u.id==1 select u).ToList();
+                var ls2 = dbContext.user.Where(u => u.id == 1).FirstOrDefault();
+            }
+
+            return Ok();
+        }
+
+
+        private int Getint()
+        {
+            return 1 + 1;
+        }
+        private int Getint1()
+        {
+            return 1 + 1;
+        }
+    }
+}
