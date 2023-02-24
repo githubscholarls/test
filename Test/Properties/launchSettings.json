@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "SocketTest": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:62117;http://localhost:62118"
+    }
+  }
+}
