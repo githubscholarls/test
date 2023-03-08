@@ -72,6 +72,46 @@ namespace EFAttribute.Controllers
             return Ok();
         }
 
+        [HttpGet]
+        public IActionResult EFDocument()
+        {
+
+            #region 保存数据
+            //var usr = new user() { name = "attach add", homeAddress = "金水" ,bornAdress="南阳"};
+            //dbContext.Attach(usr);
+            //dbContext.SaveChanges();
+
+
+            //检测带id的attach
+            var attach = dbContext.user.Where(u => u.name == "attach add").FirstOrDefault();
+            var attachId = attach.id;
+
+            //取消追踪 同一个上下文不能追踪俩一样的id  不写下面attach报错
+            dbContext.Entry(attach).State = EntityState.Detached;
+
+            //更新全部字段
+            //var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach" };
+            //dbContext.Attach(usr1);
+            //usr1.homeAddress = "Id Attach Modify";
+            //dbContext.SaveChanges();
+
+            //更新部分字段
+            var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach Attach",bornAddress="南阳 IsModify Is False"};
+            dbContext.Entry(usr1).Property(u => u.homeAddress).IsModified = true;
+            dbContext.SaveChanges();
+
+            dbContext.Entry(usr1).State = EntityState.Detached;
+
+            var attach1 = dbContext.user.Where(u => u.name == "attach add").FirstOrDefault();
+
+
+            #endregion
+
+
+
+
+            return Ok();
+        }
 
         private int Getint()
         {
