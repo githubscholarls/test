@@ -9,6 +9,7 @@ namespace EFAttribute.MyDbContext
         {
         }
         public DbSet<user> user { get; set; }
+        public DbSet<wechat> wechat { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder); 

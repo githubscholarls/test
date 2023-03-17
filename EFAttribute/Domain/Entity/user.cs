@@ -10,6 +10,8 @@
         public string? verify { get; set; }
         public string? lastLoginTime { get; set; }
 
+        public List<wechat> wechats { get; set; }
+
         #region userPosition Table
 
         public string? bornAddress { get; set; }

@@ -76,40 +76,83 @@ namespace EFAttribute.Controllers
         public IActionResult EFDocument()
         {
 
-            #region 保存数据
-            //var usr = new user() { name = "attach add", homeAddress = "金水" ,bornAdress="南阳"};
-            //dbContext.Attach(usr);
-            //dbContext.SaveChanges();
+            #region 级联删除
 
-
-            //检测带id的attach
-            var attach = dbContext.user.Where(u => u.name == "attach add").FirstOrDefault();
-            var attachId = attach.id;
-
-            //取消追踪 同一个上下文不能追踪俩一样的id  不写下面attach报错
-            dbContext.Entry(attach).State = EntityState.Detached;
-
-            //更新全部字段
-            //var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach" };
-            //dbContext.Attach(usr1);
-            //usr1.homeAddress = "Id Attach Modify";
-            //dbContext.SaveChanges();
-
-            //更新部分字段
-            var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach Attach",bornAddress="南阳 IsModify Is False"};
-            dbContext.Entry(usr1).Property(u => u.homeAddress).IsModified = true;
-            dbContext.SaveChanges();
-
-            dbContext.Entry(usr1).State = EntityState.Detached;
-
-            var attach1 = dbContext.user.Where(u => u.name == "attach add").FirstOrDefault();
 
 
             #endregion
 
 
+            #region 保存相关数据
+            {
+                //添加关联数据
+                //var usr = new user()
+                //{
+                //    name = "测试添加关联数据1",
+                //    wechats = new List<wechat>()
+                //{
+                //    new wechat() { Name = "关联数据11", Money = "1" },
+                //    new wechat() { Name = "关联数据12", Money = "1" },
+                //}
+                //};
+                //dbContext.user.Add(usr);
+                //dbContext.SaveChanges();
+
+                //添加关联实体一个元素
+                //var usr1 = dbContext.user.Include(u => u.wechats).Where(u=>u.wechats.Any()).First();
+                //var wechat = new wechat() { Name = "关联添加 user.wechats.add" };
+                //usr1.wechats.Add(wechat);
+                //dbContext.SaveChanges();
+
+                //更改关系
+                //var usr = new user { name = "更改依赖实体的关系" };
+                //var wech = dbContext.wechat.First();
+                //wech.user = usr;
+                //dbContext.SaveChanges();
+
+                //删除关系
+                var usr1 = dbContext.user.Include(u => u.wechats).Where(u=>u.wechats.Any()).First();
+                usr1.wechats.Remove(usr1.wechats.First());
+                dbContext.SaveChanges();
+
+                var usrList = dbContext.user.Include(u => u.wechats).ToList();
+
+            }
+            #endregion
+
+            #region 保存数据
+            {
+                //var usr = new user() { name = "attach add", homeAddress = "金水" ,bornAdress="南阳"};
+                //dbContext.Attach(usr);
+                //dbContext.SaveChanges();
 
 
+                //检测带id的attach
+                var attach = dbContext.user.Where(u => u.name == "attach add").FirstOrDefault();
+                var attachId = attach.id;
+
+                //取消追踪 同一个上下文不能追踪俩一样的id  不写下面attach报错
+                dbContext.Entry(attach).State = EntityState.Detached;
+
+                //更新全部字段
+                //var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach" };
+                //dbContext.Attach(usr1);
+                //usr1.homeAddress = "Id Attach Modify";
+                //dbContext.SaveChanges();
+
+                //更新部分字段
+                var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach Attach", bornAddress = "南阳 IsModify Is False" };
+                dbContext.Entry(usr1).Property(u => u.homeAddress).IsModified = true;
+                dbContext.SaveChanges();
+
+                dbContext.Entry(usr1).State = EntityState.Detached;
+
+                var attach1 = dbContext.user.Where(u => u.name == "attach add").FirstOrDefault();
+
+
+                #endregion
+
+            }
             return Ok();
         }
 
@@ -118,6 +161,10 @@ namespace EFAttribute.Controllers
             return 1 + 1;
         }
         private int Getint1()
+        {
+            return 1 + 1;
+        }
+        private int Getint2()
         {
             return 1 + 1;
         }
