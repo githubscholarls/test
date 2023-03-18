@@ -1,0 +1,29 @@
+﻿#comment here
+
+###存量
+name: redis
+version: 5.5
+prot: 6379
+stdin: true
+image: ~
+
+# 多行string
+singleLineString: >
+ this is a very long string
+ another line asdf
+#结果  this is a very long string another line asdf
+#保留换行   > 改成 |
+
+###数组
+ports1: 
+ - 6379
+ - 6380
+ports2: [6379,6380]
+
+
+###对象
+container: 
+ name: mysql
+ image: mysql
+ port: 6379
+ version: 5.7
