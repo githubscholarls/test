@@ -1,0 +1,77 @@
+version: "2"
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper
+    container_name: zookeeper81
+    ports:
+      - "2181:2181"
+    networks:
+      - zknet
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    volumes:
+      - zookeeper_data:/bitnami/zookeeper
+    restart: always
+  kafka-0:
+    image: bitnami/kafka
+    container_name: kafka92
+    ports:
+      - "9092:9092"
+    networks:
+      - zknet
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_BROKER_ID=0
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - kafka_0_data:/bitnami/kafka
+    depends_on:
+      - zookeeper
+    restart: always
+  kafka-1:
+    image: bitnami/kafka
+    container_name: kafka93
+    ports:
+      - "9093:9092"
+    networks:
+      - zknet
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_BROKER_ID=1
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - kafka_1_data:/bitnami/kafka
+    depends_on:
+      - zookeeper
+    restart: always
+  kafka-2:
+    image: bitnami/kafka
+    container_name: kafka94
+    ports:
+      - "9094:9092"
+    networks:
+      - zknet
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_BROKER_ID=2
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - kafka_2_data:/bitnami/kafka
+    depends_on:
+      - zookeeper
+    restart: always
+
+networks:
+  zknet: 
+   driver: bridge
+
+volumes:
+  zookeeper_data:
+    driver: local1
+  kafka_0_data:
+    driver: local2
+  kafka_1_data:
+    driver: local3
+  kafka_2_data:
+    driver: local4
