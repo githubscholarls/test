@@ -45,12 +45,13 @@ namespace KafKaTest.Impl
                             {
                                 saveLog(e);
                             }
+
                         }
                         catch(Exception e)
                         {
                             continue;
-                        }
                     }
+                }
                 }
                 catch (OperationCanceledException ex)
                 {
@@ -131,6 +132,7 @@ namespace KafKaTest.Impl
             {
                 throw;
             }
+
            
         }
         public override void ConsumePartitionMessage(TopicPartition topicPartition, string groupId,Action<THandleMessage> dealMessage)
@@ -155,6 +157,8 @@ namespace KafKaTest.Impl
                         }
                         catch (ConsumeException e)
                         {
+                            Console.WriteLine($"Error occured: {e.Error.Reason}");
+                            Console.WriteLine("内部1错误：" + e.Error.Reason, "待清理kafka队列清理缓存");
 
                         }
                     }
