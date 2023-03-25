@@ -11,7 +11,7 @@ namespace KafKaTest.Impl
     /// 如何解决多种消费方式下 通用的处理消息流程
     /// </summary>
     /// <typeparam name="THandleMessage"></typeparam>
-    public class KafKaConsume<THandleMessage>: LConsume<THandleMessage>
+    public class KafKaConsume<THandleMessage>: LConsume<THandleMessage> where THandleMessage : class
     {
         private readonly ILogger<KafKaConsume<THandleMessage>> logger;
 

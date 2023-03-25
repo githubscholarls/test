@@ -9,12 +9,15 @@ using System.Threading.Tasks;
 
 namespace KafKaTest.Interfaces
 {
-    public abstract class LConsume<THandleMessage>
+    public abstract class LConsume<THandleMessage> where THandleMessage : class
     {
+
+        //若设置静态   多线程中多消费组创建多消费者  线程安全问题
+
         /// <summary>
         /// 自动提交配置
         /// </summary>
-        public static ConsumerConfig autoConfig = new ConsumerConfig()
+        public ConsumerConfig autoConfig = new ConsumerConfig()
         {
             BootstrapServers = consts.BootStrapServers,
             EnableAutoCommit = false,
@@ -25,7 +28,7 @@ namespace KafKaTest.Interfaces
         /// <summary>
         /// 手动提交配置
         /// </summary>
-        public static ConsumerConfig handleConfig = new ConsumerConfig()
+        public ConsumerConfig handleConfig = new ConsumerConfig()
         {
             BootstrapServers = consts.BootStrapServers,
             EnableAutoCommit = false,
