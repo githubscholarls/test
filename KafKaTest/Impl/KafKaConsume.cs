@@ -143,7 +143,8 @@ namespace KafKaTest.Impl
             try
             {
                 using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
-                consumer.Assign(topicPartition);
+                //consumer.Assign(topicPartition);
+                //consumer.Seek(new TopicPartitionOffset(topicPartition, 300));
                 CancellationTokenSource cts = new CancellationTokenSource();
                 try
                 {
@@ -152,6 +153,7 @@ namespace KafKaTest.Impl
                         try
                         {
                             var cr = consumer.Consume(cts.Token);
+
                             //dealMessage(cr.Message.Value);
                             consumer.Commit(cr);//手动提交成功后再提交
                         }
