@@ -4,6 +4,7 @@ using KafKaTest.Impl;
 using KafKaTest.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Polly;
 using System.ComponentModel;
 
 // See https://aka.ms/new-console-template for more information
@@ -16,6 +17,48 @@ var serviceProvider = new ServiceCollection()
 .AddLogging()
 .BuildServiceProvider();
 
+
+//polly
+{
+    
+    await Task.Factory.StartNew(() =>
+    {
+        //while (true)
+        //{
+            Console.WriteLine("while id:"+Thread.CurrentThread.ManagedThreadId);
+            //同步
+            //await Task.Run(() =>
+            //{
+                ISyncPolicy policy = Policy.Handle<Exception>().Retry(3);
+                try
+                {
+                    int res = 0;
+                    Console.WriteLine("try id:" + Thread.CurrentThread.ManagedThreadId);
+                    policy.Execute(async () =>
+                    {
+                        Console.WriteLine("policy id:" + Thread.CurrentThread.ManagedThreadId);
+                        for (int i = 0; i < 100; i++)
+                        {
+                            await Task.Delay(100);
+                            Console.WriteLine(i);
+                        }
+                    });
+                    return res;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("There's one unhandled exception : " + ex.Message);
+                }
+                return 0;
+            //});
+            Console.WriteLine("end");
+        //}
+    });
+
+    
+
+
+}
 
 
 //测试分区消息处理
