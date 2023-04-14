@@ -22,6 +22,9 @@ namespace WebApiTest.Utility
         /// <exception cref="NotImplementedException"></exception>
         public Task<AuthenticateResult> AuthenticateAsync()
         {
+            //return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(), null, authenticationScheme.Name)));
+            //上面保证110直接通过鉴权
+
             logger.LogInformation(nameof(AuthenticateAsync));
             string userInfo = HttpContext.Request.Query["UrlToken"];
             if(userInfo == null)
@@ -54,7 +57,7 @@ namespace WebApiTest.Utility
         public Task ChallengeAsync(AuthenticationProperties? properties)
         {
             logger.LogInformation(nameof(UrlTokenAuthenticationHandler)+" "+nameof(ChallengeAsync));
-            HttpContext.Response.Redirect("/Auth/Index");
+            HttpContext.Response.Redirect("https://localhost:7027/api/auth/index");
             return Task.CompletedTask;
         }
         /// <summary>

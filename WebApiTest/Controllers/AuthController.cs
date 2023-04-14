@@ -6,6 +6,8 @@ using WebApiTest.Utility;
 
 namespace WebApiTest.Controllers
 {
+    [Route("/api/[controller]/[action]")]
+    [ApiController]
     public class AuthController : Controller
     {
         private readonly ILogger<AuthController> logger;
@@ -13,12 +15,19 @@ namespace WebApiTest.Controllers
         {
             this.logger = logger;
         }
+        [HttpGet]
         public IActionResult Index()
         {
             return View();
         }
         #region UrlToken
 
+        #region 默认鉴权 执行AuthenticateAsync 返回AuthenticateResult.Success 则通过鉴权
+        /// <summary>
+        /// 110
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
         [Authorize]
         public async Task<IActionResult> UrlToken()
         {
@@ -49,12 +58,14 @@ namespace WebApiTest.Controllers
 
 
         }
+        #endregion
 
         #region 角色授权
         /// <summary>
-        /// https://localhost:7027/Auth/AdminRole?UrlToken=lishuai  成功
+        /// https://localhost:7027/api/Auth/AdminRole?UrlToken=lishuai  成功
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Authorize(Roles = "Admin")]
         //[Authorize(Roles = "Admin,User")]//admin or User
         public async Task<IActionResult> AdminRole()
@@ -62,9 +73,10 @@ namespace WebApiTest.Controllers
             return Ok(nameof(AdminRole));
         }
         /// <summary>
-        /// https://localhost:7027/Auth/UserRole?UrlToken=lishuai  被403
+        /// https://localhost:7027/api/Auth/UserRole?UrlToken=lishuai  被403   (执行鉴权中的 ForbidAsync)
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> UserRole()
         {
@@ -75,6 +87,7 @@ namespace WebApiTest.Controllers
 
 
         #region 自定义授权
+        [HttpGet]
         //[Authorize(Policy = "Custom-Policy")]  //equals  [Authorize(Roles = "Admin")]    
         //or
         [Authorize(Policy = "AssertionAdminPolicy")]
@@ -87,5 +100,24 @@ namespace WebApiTest.Controllers
         #endregion
 
         #endregion
+
+
+        #region JWTToken
+
+        [HttpGet]
+        public string NoJwtToken()
+        {
+            return (nameof(NoJwtToken));
+        }
+
+        [HttpGet]
+        [Authorize]
+        public string YesJwtToken()
+        {
+            return (nameof(YesJwtToken));
+        }
+
+        #endregion
+
     }
 }

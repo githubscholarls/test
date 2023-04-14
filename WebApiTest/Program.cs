@@ -1,7 +1,13 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Globalization;
 using System.Net.Cache;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using WebApiTest;
 using WebApiTest.Utility;
 
@@ -16,16 +22,58 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-#region 使用cookie鉴权
-//builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-//    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-//    {
-//        options.LoginPath = "/Home/Index";
-//        options.AccessDeniedPath = "/Home/Index";
-//    });
+builder.Services.AddAuthenticationCore();
+
+#region swagger认证
+
+builder.Services.AddSwaggerGen(options =>
+{
+    //添加安全定义
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "请输入token ，格式为:Bearer token",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        BearerFormat = "JWT",
+        Scheme = JwtBearerDefaults.AuthenticationScheme
+    });
+
+    //添加安全要求
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement {
+    {
+        new OpenApiSecurityScheme
+        {
+            Reference=new OpenApiReference()
+            {
+                Type=ReferenceType.SecurityScheme,
+                Id="Bearer"
+            }
+        },
+        new string[]{}
+    }});
+
+});
+
 #endregion
 
-#region 自定义鉴权
+#region 认证
+
+#region 鉴权
+
+//********101  102 同时存在时  请求含authorize action  101全部失效
+
+#region 使用cookie鉴权  101
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+    {
+        options.LoginPath = "/Home/Index";
+        options.AccessDeniedPath = "/Home/Index";
+    });
+#endregion
+
+
+#region 自定义鉴权  102
 
 builder.Services.AddAuthentication(options =>
 {
@@ -38,15 +86,32 @@ builder.Services.AddAuthentication(options =>
     options.DefaultSignInScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
     options.DefaultSignOutScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
     options.DefaultForbidScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
-
-
-
 });
+#endregion
+
+
+#region JWT鉴权  103
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidAudience = "",
+            ValidIssuer = "",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("密钥"))
+        };
+    });
 
 #endregion
 
-//不用写，controllersWithViews中已包含
-builder.Services.AddAuthorization();
+#endregion
+
+#region 授权
 
 #region 自定义授权
 
@@ -62,8 +127,16 @@ builder.Services.AddAuthorization(options =>
 
 #endregion
 
+#endregion
 
-#region net7缓存
+#endregion
+
+
+
+//不用写，controllersWithViews中已包含
+//builder.Services.AddAuthorization();
+
+#region net7添加缓存
 
 builder.Services.AddOutputCache(options =>
 {
@@ -80,6 +153,7 @@ builder.Services.AddOutputCache(options =>
 
 var app = builder.Build();
 
+#region .net7使用缓存
 
 app.UseOutputCache();
 
@@ -97,7 +171,7 @@ var blog = app.MapGroup("blog").CacheOutput(x => x.Tag("blog"));
 blog.MapGet("/", Gravatar.WriteGravatar);// prot:xx/blog :5482  3217  port:xx/blog/  :3968   2194
 blog.MapGet("/same1", Gravatar.WriteGravatar);//0639   5348
 blog.MapGet("/same2", Gravatar.WriteGravatar);//1442   3974  4655
-blog.MapGet("/post/{id}", Gravatar.WriteGravatar).CacheOutput(x => x.Tag("blog","byid")); // Calling CacheOutput() here overwrites the group's policy//id=1 4308  id=2  1916  id =3 4144    blog组缓存策略失效
+blog.MapGet("/post/{id}", Gravatar.WriteGravatar).CacheOutput(x => x.Tag("blog", "byid")); // Calling CacheOutput() here overwrites the group's policy//id=1 4308  id=2  1916  id =3 4144    blog组缓存策略失效
 
 //更新outputcache中指定的tag接口缓存
 app.MapPost("/purge/{tag}", async (IOutputCacheStore cache, string tag) =>
@@ -139,6 +213,7 @@ app.MapGet("/etag", async (context) =>
 // When the request header If-Modified-Since is provided, return 304 if the cached entry is older
 app.MapGet("/ims", Gravatar.WriteGravatar).CacheOutput();
 
+#endregion
 
 
 // Configure the HTTP request pipeline.
