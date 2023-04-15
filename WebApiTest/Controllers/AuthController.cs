@@ -10,10 +10,13 @@ namespace WebApiTest.Controllers
     [ApiController]
     public class AuthController : Controller
     {
+
+        private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthController> logger;
-        public AuthController(ILogger<AuthController> logger)
+        public AuthController(ILogger<AuthController> logger, JwtHelper jwtHelper)
         {
             this.logger = logger;
+            _jwtHelper = jwtHelper;
         }
         [HttpGet]
         public IActionResult Index()
@@ -103,6 +106,12 @@ namespace WebApiTest.Controllers
 
 
         #region JWTToken
+
+        [HttpGet]
+        public string CreateJWTToken()
+        {
+            return _jwtHelper.CreateToken();
+        }
 
         [HttpGet]
         public string NoJwtToken()
