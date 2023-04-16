@@ -5,13 +5,13 @@ using System.Security.Claims;
 
 namespace WebApiTest.Utility
 {
-    public class UrlTokenAuthenticationHandler : IAuthenticationHandler,IAuthenticationSignInHandler,IAuthenticationSignOutHandler
+    public class UrlToken2AuthenticationHandler : IAuthenticationHandler,IAuthenticationSignInHandler,IAuthenticationSignOutHandler
     {
         private AuthenticationScheme authenticationScheme;
         private HttpContext HttpContext;
-        private ILogger<UrlTokenAuthenticationHandler> logger;
+        private ILogger<UrlToken2AuthenticationHandler> logger;
 
-        public UrlTokenAuthenticationHandler(ILogger<UrlTokenAuthenticationHandler> logger)
+        public UrlToken2AuthenticationHandler(ILogger<UrlToken2AuthenticationHandler> logger)
         {
             this.logger = logger;
         }
@@ -22,18 +22,16 @@ namespace WebApiTest.Utility
         /// <exception cref="NotImplementedException"></exception>
         public Task<AuthenticateResult> AuthenticateAsync()
         {
-            //return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(), null, authenticationScheme.Name)));
-            //上面保证110直接通过鉴权
 
             logger.LogInformation(nameof(AuthenticateAsync));
-            string userInfo = HttpContext.Request.Query["UrlToken"];
+            string userInfo = HttpContext.Request.Query["UrlToken2"];
             if(userInfo == null)
             {
                 return Task.FromResult(AuthenticateResult.NoResult());
             }
             else if("lishuai".Equals(userInfo))
             {
-                var claimIdentity = new ClaimsIdentity("UrlToken1Authentice");
+                var claimIdentity = new ClaimsIdentity("UrlToken2Authentice");
                 claimIdentity.AddClaim(new Claim(ClaimTypes.Name, "lishuai"));
                 claimIdentity.AddClaim(new Claim(ClaimTypes.Role,"Admin"));
                 claimIdentity.AddClaim(new Claim(ClaimTypes.Email, "xxxxxx"));
@@ -56,9 +54,7 @@ namespace WebApiTest.Utility
         /// <exception cref="NotImplementedException"></exception>
         public Task ChallengeAsync(AuthenticationProperties? properties)
         {
-            logger.LogInformation(nameof(UrlTokenAuthenticationHandler)+" "+nameof(ChallengeAsync));
-            //会导致cookie login 不会被执行
-            //HttpContext.Response.Redirect("https://localhost:7027/api/auth/login");
+            logger.LogInformation(nameof(UrlToken2AuthenticationHandler) +" "+nameof(ChallengeAsync));
             return Task.CompletedTask;
         }
         /// <summary>
@@ -70,14 +66,13 @@ namespace WebApiTest.Utility
         public Task ForbidAsync(AuthenticationProperties? properties)
         {
             logger.LogInformation(nameof(ForbidAsync));
-            //HttpContext.Response.Redirect("https://localhost:7027/api/auth/Denied");
             HttpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
             return Task.CompletedTask;
         }
 
         public Task InitializeAsync(AuthenticationScheme scheme, HttpContext context)
         {
-            logger.LogInformation(nameof(UrlTokenAuthenticationHandler) + " " + nameof(InitializeAsync));
+            logger.LogInformation(nameof(UrlToken2AuthenticationHandler) + " " + nameof(InitializeAsync));
             authenticationScheme = scheme;
             HttpContext= context;
             return Task.CompletedTask;
