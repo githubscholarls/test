@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.IdentityModel.Tokens;
+#if NET7_0_OR_GREATER
+using Microsoft.AspNetCore.OutputCaching;
+#endif
 using Microsoft.OpenApi.Models;
+using System.Configuration;
 using System.Globalization;
 using System.Net.Cache;
 using System.Security.Claims;
@@ -21,6 +24,8 @@ builder.Services.AddControllersWithViews();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton(new JwtHelper(builder.Configuration));
 
 builder.Services.AddAuthenticationCore();
 
@@ -61,49 +66,58 @@ builder.Services.AddSwaggerGen(options =>
 
 #region 鉴权
 
-//********101  102 同时存在时  请求含authorize action  101全部失效
+#region cookie鉴权
 
-#region 使用cookie鉴权  101
+//指定 CookieAuthenticationDefaults.AuthenticationScheme 默认鉴权
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
-        options.LoginPath = "/Home/Index";
-        options.AccessDeniedPath = "/Home/Index";
+    options.LoginPath = "/api/auth/Check11";
+        options.LogoutPath = "/api/login/LogOutCookies";
+    options.AccessDeniedPath = "/api/auth/Check12";
+})
+    .AddCookie(Consts.CookiesAuth, config =>
+    {
+        config.LoginPath = "/api/auth/Check21";//默认 /Acount/Login
+        config.AccessDeniedPath = "/api/auth/Check22";
     });
+
 #endregion
 
 
-#region 自定义鉴权  102
+#region 自定义鉴权
 
 builder.Services.AddAuthentication(options =>
 {
     //添加一种scheme方案
-    options.AddScheme<UrlTokenAuthenticationHandler>(UrlTokenAuthenticationDefaults.AuthenticationScheme, "UrlTokenScheme-Demo");
-    //必须配置一个默认鉴权
-    options.DefaultAuthenticateScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
+    options.AddScheme<UrlTokenAuthenticationHandler>(Consts.UrlTokenScheme, "UrlTokenScheme-Demo");
+    options.AddScheme<UrlToken2AuthenticationHandler>(Consts.UrlTokenScheme2, "UrlTokenScheme2-Demo");
+    //当从未指定默认鉴权 必须配置一个默认鉴权(否则请求authorize特性接口报500错误)
+    //options.DefaultAuthenticateScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
     //可选
-    options.DefaultChallengeScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignOutScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultForbidScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
+    //options.DefaultChallengeScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
+    //options.DefaultSignInScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
+    //options.DefaultSignOutScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
+    //options.DefaultForbidScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
 });
 #endregion
 
 
-#region JWT鉴权  103
+#region JWT鉴权
 
+//封装了IAuthenticationHandler 指定 JwtBearerDefaults.AuthenticationScheme  默认鉴权（覆盖前面指定的）
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+        options.TokenValidationParameters = new TokenValidationParameters()
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidAudience = "",
-            ValidIssuer = "",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("密钥"))
+            ValidAudience = "scholar",
+            ValidIssuer = "scholar",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("1234567890123456789"))
         };
     });
 
@@ -115,15 +129,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 #region 自定义授权
 
-builder.Services.AddAuthorization(options =>
-{
-    //options.AddPolicy("Custom-Policy", policyBuilder => policyBuilder.RequireRole("Admin"));
-    //or
-    options.AddPolicy("AssertionAdminPolicy", policyBuilder =>
-    {
-        policyBuilder.RequireAssertion(context => context.User.HasClaim(c => c.Type == ClaimTypes.Role) && context.User.Claims.First(c => c.Type.Equals(ClaimTypes.Role)).Value == "Admin");
-    });
-});
+//builder.Services.AddAuthorization(options =>
+//{
+//    //options.AddPolicy("Custom-Policy", policyBuilder => policyBuilder.RequireRole("Admin"));
+//    //or
+//    options.AddPolicy("AssertionAdminPolicy", policyBuilder =>
+//    {
+//        policyBuilder.RequireAssertion(context => context.User.HasClaim(c => c.Type == ClaimTypes.Role) && context.User.Claims.First(c => c.Type.Equals(ClaimTypes.Role)).Value == "Admin");
+//    });
+//});
 
 #endregion
 
@@ -138,6 +152,7 @@ builder.Services.AddAuthorization(options =>
 
 #region net7添加缓存
 
+# if NET7_0_OR_GREATER
 builder.Services.AddOutputCache(options =>
 {
     // Define policies for all requests which are not configured per endpoint or per request
@@ -147,13 +162,14 @@ builder.Services.AddOutputCache(options =>
 
     options.AddPolicy("NoCache", b => b.NoCache());
 });
-
-
+#endif
 #endregion
 
 var app = builder.Build();
 
 #region .net7使用缓存
+
+#if NET7_0_OR_GREATER
 
 app.UseOutputCache();
 
@@ -212,6 +228,8 @@ app.MapGet("/etag", async (context) =>
 
 // When the request header If-Modified-Since is provided, return 304 if the cached entry is older
 app.MapGet("/ims", Gravatar.WriteGravatar).CacheOutput();
+
+#endif
 
 #endregion
 
