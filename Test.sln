@@ -11,9 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFAttribute", "EFAttribute\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KafKaTest", "KafKaTest\KafKaTest.csproj", "{65EE28AE-AC5C-402F-942B-2D0E000BEA97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExceptionlessTest", "ExceptionlessTest\ExceptionlessTest.csproj", "{AC5EB97C-F1E5-4BCE-8F06-2C8314E3B8B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExceptionlessTest", "ExceptionlessTest\ExceptionlessTest.csproj", "{AC5EB97C-F1E5-4BCE-8F06-2C8314E3B8B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiTest", "WebApiTest\WebApiTest.csproj", "{98876DBF-B6BE-47A0-B92C-111FD1F0E744}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiTest", "WebApiTest\WebApiTest.csproj", "{98876DBF-B6BE-47A0-B92C-111FD1F0E744}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GCTest", "GCTest\GCTest.csproj", "{2C19807D-D4A8-46DB-BFF0-DB2A768E618B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{98876DBF-B6BE-47A0-B92C-111FD1F0E744}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98876DBF-B6BE-47A0-B92C-111FD1F0E744}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98876DBF-B6BE-47A0-B92C-111FD1F0E744}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C19807D-D4A8-46DB-BFF0-DB2A768E618B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C19807D-D4A8-46DB-BFF0-DB2A768E618B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C19807D-D4A8-46DB-BFF0-DB2A768E618B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C19807D-D4A8-46DB-BFF0-DB2A768E618B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
