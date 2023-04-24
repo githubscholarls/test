@@ -156,17 +156,5 @@ namespace EFAttribute.Controllers
             return Ok();
         }
 
-        private int Getint()
-        {
-            return 1 + 1;
-        }
-        private int Getint1()
-        {
-            return 1 + 1;
-        }
-        private int Getint2()
-        {
-            return 1 + 1;
-        }
     }
 }
