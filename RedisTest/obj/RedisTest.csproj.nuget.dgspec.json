@@ -1,25 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "G:\\file\\source\\vs\\test\\gitTest\\test\\RedisTest\\RedisTest.csproj": {}
+    "C:\\Users\\23635\\source\\repos\\Test\\RedisTest\\RedisTest.csproj": {}
   },
   "projects": {
-    "G:\\file\\source\\vs\\test\\gitTest\\test\\RedisTest\\RedisTest.csproj": {
+    "C:\\Users\\23635\\source\\repos\\Test\\RedisTest\\RedisTest.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "G:\\file\\source\\vs\\test\\gitTest\\test\\RedisTest\\RedisTest.csproj",
+        "projectUniqueName": "C:\\Users\\23635\\source\\repos\\Test\\RedisTest\\RedisTest.csproj",
         "projectName": "RedisTest",
-        "projectPath": "G:\\file\\source\\vs\\test\\gitTest\\test\\RedisTest\\RedisTest.csproj",
-        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-        "outputPath": "G:\\file\\source\\vs\\test\\gitTest\\test\\RedisTest\\obj\\",
+        "projectPath": "C:\\Users\\23635\\source\\repos\\Test\\RedisTest\\RedisTest.csproj",
+        "packagesPath": "C:\\Users\\23635\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\23635\\source\\repos\\Test\\RedisTest\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "E:\\installlocation\\vsShared\\NuGetPackages",
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\23635\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -60,7 +55,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.101\\RuntimeIdentifierGraph.json"
         }
       }
     }
