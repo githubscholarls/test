@@ -48,7 +48,6 @@ namespace WebApiTest.Controllers
             HttpContext.SignOutAsync(Consts.Cookies);
             return Ok();
         }
-
         #endregion
     }
 }

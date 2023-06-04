@@ -11,13 +11,19 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="6.0.2" />
+		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="6.0.5" />
+		<PackageReference Include="EntityFramework" Version="6.4.4" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.16" />
 		<PackageReference Include="Microsoft.AspNetCore.ResponseCaching" Version="2.2.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.5" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+		<PackageReference Include="Npgsql" Version="7.0.4" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 		<PackageReference Include="System.Globalization" Version="4.3.0" />
 		<PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
