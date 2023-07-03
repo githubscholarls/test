@@ -2,6 +2,8 @@ using EFAttribute.Domain.Entity;
 using EFAttribute.MyDbContext;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SQLitePCL;
+using System.Data.SqlTypes;
 
 namespace EFAttribute.Controllers
 {
@@ -15,7 +17,7 @@ namespace EFAttribute.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
-        private TestDbContext dbContext;
+        private readonly TestDbContext dbContext;
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger, TestDbContext testDbContext)
         {
@@ -65,7 +67,7 @@ namespace EFAttribute.Controllers
                 dbContext.SaveChanges();
 
                 //select 注意不同表是否都有同一列为相同值，拆表后查询为inner
-                var ls = (from u in dbContext.user where u.id==1 select u).ToList();
+                var ls = (from u in dbContext.user where u.id == 1 select u).ToList();
                 var ls2 = dbContext.user.Where(u => u.id == 1).FirstOrDefault();
             }
 
@@ -111,7 +113,7 @@ namespace EFAttribute.Controllers
                 //dbContext.SaveChanges();
 
                 //删除关系
-                var usr1 = dbContext.user.Include(u => u.wechats).Where(u=>u.wechats.Any()).First();
+                var usr1 = dbContext.user.Include(u => u.wechats).Where(u => u.wechats.Any()).First();
                 usr1.wechats.Remove(usr1.wechats.First());
                 dbContext.SaveChanges();
 
@@ -156,5 +158,56 @@ namespace EFAttribute.Controllers
             return Ok();
         }
 
+        private int Getint()
+        {
+            return 1 + 1;
+        }
+        private int Getint1()
+        {
+            return 1 + 1;
+        }
+        private int Getint2()
+        {
+            return 1 + 1;
+        }
+
+        [HttpGet]
+        public IActionResult TestAdd()
+        {
+            dbContext.Add(new user() { name = "testAdd" });
+            dbContext.SaveChanges();
+            return Ok();
+        }
+
+        [HttpGet]
+        public IActionResult ExecuteSqlScript()
+        {
+            var str = "'lishuai' ;update \"user\"set sex =1 where id =3";
+
+            //这也会报错  没有add_time  
+            //var r = dbContext.user.FromSql($"select id,name,sex from \"user\"").ToList();
+            //var r1 = dbContext.user.FromSql($"select  id,name,sex from \"user\" where name={str}").ToList();
+            //var r2 = dbContext.user.FromSqlRaw($"select  id,name,sex from \"user\" where name={str}").ToList();
+            //var r3 = dbContext.user.FromSqlInterpolated($"select  id,name,sex from \"user\" where name={str}").ToList();
+
+            {
+
+                //防止sql注入
+                //dbContext.Database.ExecuteSql($"select  id,name,sex from \"user\" where name={str}");
+                ////不能防止
+                //dbContext.Database.ExecuteSqlRaw($"select  id,name,sex from \"user\" where name={str}");
+                ////防止sql注入
+                //dbContext.Database.ExecuteSqlInterpolated($"select  id,name,sex from \"user\" where name={str}");
+            }
+            {
+                var strr = $"select  id,name,sex from \"user\" where name={str}";
+                //SQLite Error 1: 'near "@p0": syntax error'.
+                dbContext.Database.ExecuteSql($"{strr}");
+                dbContext.Database.ExecuteSqlRaw($"{strr}");
+                dbContext.Database.ExecuteSqlInterpolated($"{strr}");
+            }
+
+            return Ok();
+         }
     }
 }

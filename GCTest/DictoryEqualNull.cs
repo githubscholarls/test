@@ -23,49 +23,54 @@ namespace GCTest
         A11ocated : Al1ocated memory per single operation(managed only，inc1usive,1KB = 1024B)
         1 us: 1 Microsecond(o.o00001 sec)*/
 
-
+        private static int setNullVal = 0;
+        private static int clearEmptyVal = 0;
 
         [Benchmark]
         public void DictorySetNull()
         {
             Dictionary<string, List<BinaryTreeReference>> dic = new();
             int k = 0;
-            for (int i = 0; i < 10; i++)
+            dic ??= new();
+            for (int j = 0; j < 10; j++)
             {
-                dic ??= new();
-                for (int j = 0; j < 100; j++)
-                {
-                    dic.Add(j.ToString(), new List<BinaryTreeReference>(){ new BinaryTreeReference
+                dic.Add(j.ToString(), new List<BinaryTreeReference>(){ new BinaryTreeReference
                 {
                     Left =j,
                     Right = j
                 } });
-                }
-                if (dic.Count == 100) k++;
-                dic = null;
             }
-            Console.WriteLine(nameof(DictorySetNull) + $"ok:{k}");
+            if (dic.Count == 100)
+            {
+                k++;
+                Console.WriteLine(nameof(DictorySetNull) + $"ok:{k}");
+            }
+            dic = null;
+            setNullVal++;
+            Console.WriteLine("--- setNullVal" + setNullVal);
         }
         [Benchmark]
         public void DictoryClear()
         {
             Dictionary<string, List<BinaryTreeReference>> dic = new();
             int k = 0;
-            for (int i = 0; i < 10; i++)
+            dic ??= new();
+            for (int j = 0; j < 10; j++)
             {
-                dic ??= new();
-                for (int j = 0; j < 100; j++)
-                {
-                    dic.Add(j.ToString(), new List<BinaryTreeReference>(){ new BinaryTreeReference
+                dic.Add(j.ToString(), new List<BinaryTreeReference>(){ new BinaryTreeReference
                 {
                     Left =j,
                     Right = j
                 } });
-                }
-                if (dic.Count == 100) k++;
-                dic.Clear();
             }
-            Console.WriteLine(nameof(DictoryClear) + $"ok:{k}");
+            if (dic.Count == 100)
+            {
+                k++;
+                Console.WriteLine(nameof(DictoryClear) + $"ok:{k}");
+            }
+            dic.Clear();
+            clearEmptyVal++;
+            Console.WriteLine("--- clearEmptyVal" + clearEmptyVal);
         }
     }
 }

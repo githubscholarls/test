@@ -243,7 +243,7 @@ namespace WebApiTest.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public IActionResult Check12()
+        private IActionResult Check12()
         {
             return Ok("cookies 1 ，授权未通过");
         }

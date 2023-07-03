@@ -398,3 +398,5 @@ FodyWeavers.xsd
 *.sln.iml
 /.vs/Test/DesignTimeBuild/.dtbcache.v2
 /.vs/Test/v17/.suo
+/RedisTest/obj/
+/RedisTest/Debug/

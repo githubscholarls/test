@@ -13,10 +13,19 @@ using System.Security.Cryptography;
 using System.Text;
 using WebApiTest;
 using WebApiTest.Utility;
+using Npgsql;
+using Microsoft.Extensions.DependencyInjection;
+using System.Data.Entity.Infrastructure;
+using WebApiTest.Application.Database;
+using WebApiTest.Application.Common.Interface;
+using WebApiTest.Application.Common;
+using HealthChecks.UI.Client;
 
 var builder = WebApplication.CreateBuilder(args);
+var config = builder.Configuration;
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
 
 // Add services to the container.
 
@@ -25,6 +34,13 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<IDbConnectionFactoryls>(_ => new NpgsqlConnectionFactory(config.GetConnectionString("PG_MAIN")!));
+
+builder.Services.AddHealthChecks()
+    //.AddCheck<PgDataBaseCheck>("/pgdb");
+    //or
+    .AddNpgSql(config.GetConnectionString("PG_MAIN")!);
+    
 builder.Services.AddSingleton(new JwtHelper(builder.Configuration));
 
 builder.Services.AddAuthenticationCore();
@@ -93,12 +109,12 @@ builder.Services.AddAuthentication(options =>
     options.AddScheme<UrlTokenAuthenticationHandler>(Consts.UrlTokenScheme, "UrlTokenScheme-Demo");
     options.AddScheme<UrlToken2AuthenticationHandler>(Consts.UrlTokenScheme2, "UrlTokenScheme2-Demo");
     //当从未指定默认鉴权 必须配置一个默认鉴权(否则请求authorize特性接口报500错误)
-    //options.DefaultAuthenticateScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
+    //options.DefaultAuthenticateScheme = Consts.UrlTokenScheme;
     //可选
-    //options.DefaultChallengeScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
-    //options.DefaultSignInScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
-    //options.DefaultSignOutScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
-    //options.DefaultForbidScheme = UrlTokenAuthenticationDefaults.AuthenticationScheme;
+    //options.DefaultChallengeScheme = Consts.UrlTokenScheme;
+    //options.DefaultSignInScheme = Consts.UrlTokenScheme;
+    //options.DefaultSignOutScheme = Consts.UrlTokenScheme;
+    //options.DefaultForbidScheme = Consts.UrlTokenScheme;
 });
 #endregion
 
@@ -235,17 +251,23 @@ app.MapGet("/ims", Gravatar.WriteGravatar).CacheOutput();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHealthChecks("/_health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});//.RequireAuthorization();
 //app.MapControllers();
 app.MapDefaultControllerRoute();
 

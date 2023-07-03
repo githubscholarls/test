@@ -1,4 +1,6 @@
-﻿namespace EFAttribute.Domain.Entity
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace EFAttribute.Domain.Entity
 {
     public class user
     {
