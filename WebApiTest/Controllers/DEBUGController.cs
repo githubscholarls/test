@@ -140,7 +140,7 @@ namespace WebApiTest.Controllers
         {
             // TCP    192.168.0.38:52349     8.130.26.7:80          TIME_WAIT       0       * 20
             //TCP    192.168.0.38:59272     8.130.26.7:22          ESTABLISHED     54404
-            //for (int i = 0; i < 20; i++)
+            //for (int i = 0; i < 20; i++)//这个导致本项目所在主机的端口被大量占用，与下面请求服务器端占用相同的端口只有一个连接
             //{
             //    using (var client = new HttpClient())
             //    {
