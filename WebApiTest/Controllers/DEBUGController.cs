@@ -1,7 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Domain.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using System.Net.Http;
 using System.Security.Permissions;
+using System.Security.Policy;
 
 namespace WebApiTest.Controllers
 {
@@ -12,34 +16,12 @@ namespace WebApiTest.Controllers
     {
         private readonly IDistributedCache _cache;
         private readonly ConcurrentDictionary<string, string> _headers = new ConcurrentDictionary<string, string>();
-        public DeBugController(IDistributedCache cache)
+        private readonly ILogger<DeBugController> _logger;
+        public DeBugController(IDistributedCache cache, ILogger<DeBugController> logger)
         {
             _cache = cache;
+            _logger = logger;
         }
-        [HttpGet]
-        public IActionResult TestCrashDump()
-        {
-            //1. crash
-            Task.Factory.StartNew(() =>
-            {
-                Test("a");
-            });
-            return Ok();
-        }
-        [NonAction]
-        public static string Test(string a)
-        {
-            return Test("a" + a.Length);
-        }
-        [HttpGet]
-        public IActionResult TestCpuDump()
-        {
-            Task.Factory.StartNew(() => { bool b = true; while (true) { b = !b; } });
-            Task.Factory.StartNew(() => { bool b = true; while (true) { b = !b; } });
-            return Ok();
-        }
-
-
         [HttpGet]
         public async Task<IActionResult> TestDicAndDistribute()
         {
@@ -119,6 +101,68 @@ namespace WebApiTest.Controllers
             var res = await _cache.GetStringAsync(key);
             var vals = await _cache.GetStringAsync(key);
             var vals1 = _headers[key];
+
+            return Ok();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TestHttpClient([FromServices]IHttpClientFactory httpClientFactory)
+        {
+            using var httpClient = httpClientFactory.CreateClient("Gaode");
+            //key=e19117b7c695ab26f1c3c3aa2369065e&origin=116.395645,39.929985&destination=121.579005,29.885258&strategy=34&show_fields=cost
+            var queryParams = new Dictionary<string, string> { { "key", "e19117b7c695ab26f1c3c3aa2369065e" }, { "origin", "116.395645,39.929985" }, { "destination", "121.579005,29.885258" }, { "show_fields", "cost" }, { "strategy", "34" } };
+            var queryString = new FormUrlEncodedContent(queryParams).ReadAsStringAsync().Result;
+            var urlWithParams = $"v5/direction/driving?{queryString}";
+
+            var response = await httpClient.GetAsync(urlWithParams);
+            response.EnsureSuccessStatusCode();
+            var result = await response.Content.ReadFromJsonAsync<DirectionDrivingRes>();
+
+            return Ok(JsonConvert.SerializeObject(result));
+        }
+        [HttpGet]
+        public async Task<IActionResult> TesthttpClientFactoryPolly([FromServices] IHttpClientFactory httpClientFactory)
+        {
+            try
+            {
+                using var httpClient = httpClientFactory.CreateClient("httpClientFactoryPolly");
+                var response = await httpClient.GetAsync("/someapi");
+                response.EnsureSuccessStatusCode();
+                return Ok($"content:{response.Content.ReadAsStreamAsync().Result}");
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+        [HttpGet]
+        public async Task<IActionResult> TesthttpClientFactorySocket([FromServices]IHttpClientFactory httpClientFactory)
+        {
+            // TCP    192.168.0.38:52349     8.130.26.7:80          TIME_WAIT       0       * 20
+            //TCP    192.168.0.38:59272     8.130.26.7:22          ESTABLISHED     54404
+            //for (int i = 0; i < 20; i++)
+            //{
+            //    using (var client = new HttpClient())
+            //    {
+            //        var result = await client.GetAsync("http://8.130.26.7/");
+            //        Console.WriteLine($"请求返回状态码：{result.StatusCode}");
+            //    }
+            //}
+            //await Console.Out.WriteLineAsync("访问完毕");
+
+
+            //TCP    192.168.0.38:52258     8.130.26.7:80          ESTABLISHED     87880
+            //TCP    192.168.0.38:59272     8.130.26.7:22          ESTABLISHED     54404
+            for (int i = 0; i < 20; i++)
+            {
+                using (var client = httpClientFactory.CreateClient())
+                {
+                    var result = await client.GetAsync("http://8.130.26.7/");
+                    Console.WriteLine($"请求返回状态码：{result.StatusCode}");
+                }
+            }
+            await Console.Out.WriteLineAsync("访问完毕");
+
 
             return Ok();
         }

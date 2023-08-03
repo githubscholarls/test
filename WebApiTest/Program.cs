@@ -20,6 +20,9 @@ using WebApiTest.Application.Database;
 using WebApiTest.Application.Common.Interface;
 using WebApiTest.Application.Common;
 using HealthChecks.UI.Client;
+using WebApiTest.Domain.Options;
+using WebApiTest.Application.Common.Delegate;
+using Polly;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -29,10 +32,34 @@ builder.Logging.AddConsole();
 
 // Add services to the container.
 
+builder.Services.Configure<CustomSetting>(builder.Configuration.GetSection("CustomSetting"));
+
 builder.Services.AddControllersWithViews();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+#region httpclient
+builder.Services.AddSingleton<CustomDelegatingHandler>();
+builder.Services.AddHttpClient("Gaode", config =>
+{
+    config.BaseAddress = new Uri("https://restapi.amap.com/");
+    config.Timeout = TimeSpan.FromSeconds(30);
+    config.DefaultRequestHeaders.Accept.Clear();
+    config.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+    config.DefaultRequestHeaders.Add("User-Agent", "MyHttpClient");
+}).AddHttpMessageHandler(handle => handle.GetRequiredService<CustomDelegatingHandler>());
+
+builder.Services.AddHttpClient("httpClientFactoryPolly", config =>
+{
+    config.BaseAddress = new Uri("https://api.github.com/");
+    config.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+}).AddTransientHttpErrorPolicy(builder=>builder.WaitAndRetryAsync(new[] { TimeSpan.FromSeconds(1),TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3) }));
+
+#endregion
+
+
+
 
 builder.Services.AddSingleton<IDbConnectionFactoryls>(_ => new NpgsqlConnectionFactory(config.GetConnectionString("PG_MAIN")!));
 

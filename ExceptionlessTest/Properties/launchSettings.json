@@ -3,6 +3,12 @@
     "WSL": {
       "commandName": "WSL2",
       "distributionName": ""
+    },
+    "Docker": {
+      "commandName": "Docker"
+    },
+    "配置文件 1": {
+      "commandName": "Docker"
     }
   }
 }

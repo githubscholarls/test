@@ -1,0 +1,37 @@
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+COPY ["WebApiTest/WebApiTest.csproj", "WebApiTest/"]
+RUN dotnet restore "WebApiTest/WebApiTest.csproj"
+COPY . .
+WORKDIR "/src/WebApiTest"
+RUN dotnet build "WebApiTest.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "WebApiTest.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+# 1. 使用中科大镜像源
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+
+# 2. 安装 wget
+RUN apt-get update && apt-get install -y gdb
+RUN dpkg -i procdump.deb
+
+RUN echo "#!/bin/bash \n\
+procdump -c 20 -n 2 -s 5 -w dotnet /dumps & \n\
+dotnet \$1 \n\
+" > ./start.sh
+
+RUN chmod +x ./start.sh
+
+ENTRYPOINT ["./start.sh", "AspNetWebApi.dll"]

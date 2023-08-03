@@ -1,0 +1,35 @@
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+WORKDIR /src
+COPY ["WebApiTest/WebApiTest.csproj", "WebApiTest/"]
+RUN dotnet restore "WebApiTest/WebApiTest.csproj"
+COPY . .
+WORKDIR "/src/WebApiTest"
+RUN dotnet build "WebApiTest.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "WebApiTest.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+# 安装 curl 或 wget 命令（根据需要选择）
+RUN apt-get update && apt-get install -y curl
+
+# 下载 lldb.init 文件并复制到容器中
+RUN curl -o /root/.lldbinit https://example.com/lldb.init
+
+# 安装 lldb 调试器工具
+RUN apt-get update && apt-get install -y lldb
+
+# 设置调试器环境变量
+ENV LLDB_DEBUG true
+
+ENTRYPOINT ["dotnet", "WebApiTest.dll"]

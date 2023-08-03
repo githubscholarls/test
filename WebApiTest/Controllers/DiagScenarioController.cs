@@ -1,5 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Diagnostics.NETCore.Client;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
+using WebApiTest.Domain.Options;
 
 namespace WebApiTest.Controllers
 {
@@ -12,6 +16,11 @@ namespace WebApiTest.Controllers
 
         private static Processor p = new Processor();
 
+        private readonly CustomSetting customSetting;
+        public DiagScenarioController(IOptionsSnapshot<CustomSetting> customSettingOptions)
+        {
+            customSetting = customSettingOptions.Value;
+        }
         [HttpGet]
         [Route("deadlock/")]
         public ActionResult<string> deadlock()
@@ -169,6 +178,62 @@ namespace WebApiTest.Controllers
             Customer c = await PretendQueryCustomerFromDbAsync("Dana");
             return "success:taskasyncwait";
         }
+
+        #region 非github官方案例
+
+
+        [HttpGet("[action]")]
+        public IActionResult TestCrashDump()
+        {
+            //1. crash
+            Task.Factory.StartNew(() =>
+            {
+                Test("a");
+            });
+            return Ok();
+        }
+        [NonAction]
+        public static string Test(string a)
+        {
+            return Test("a" + a.Length);
+        }
+        [HttpGet("[action]")]
+        public IActionResult TestCpuDump()
+        {
+
+            var list = new List<int>() { 1, 2, 3, 4 };
+            var s1 = list.OrderByDescending(l => l == 2 ? 1 : 0);
+
+
+            Parallel.For(0, int.MaxValue, (i) =>
+            {
+                while (true)
+                {
+
+                }
+            });
+
+            Task.Factory.StartNew(() => { bool b = true; while (true) { b = !b; } });
+            Task.Factory.StartNew(() => { bool b = true; while (true) { b = !b; } });
+            return Ok();
+        }
+
+        [HttpGet("[action]")] 
+        public IActionResult GenerateDump()
+        {
+            var client = new DiagnosticsClient(Environment.ProcessId);
+
+            if (!Directory.Exists(customSetting.DumpPath))
+            {
+                Directory.CreateDirectory(customSetting.DumpPath);
+            }
+            client.WriteDump(DumpType.WithHeap, customSetting.DumpPath + $"{DateTime.Now:yyyy-MM-dd-HH-mm-ss}" + Guid.NewGuid().ToString()+".dmp");
+            return Ok("success");
+        }
+
+        #endregion
+
+
 
 
         async Task<Customer> PretendQueryCustomerFromDbAsync(string customerId)
