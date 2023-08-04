@@ -66,7 +66,8 @@ builder.Services.AddSingleton<IDbConnectionFactoryls>(_ => new NpgsqlConnectionF
 builder.Services.AddHealthChecks()
     //.AddCheck<PgDataBaseCheck>("/pgdb");
     //or
-    .AddNpgSql(config.GetConnectionString("PG_MAIN")!);
+    .AddNpgSql(config.GetConnectionString("PG_MAIN")!)
+    .AddMongoDb(config.GetConnectionString("Mongo_DB")!);
     
 builder.Services.AddSingleton(new JwtHelper(builder.Configuration));
 
