@@ -4,7 +4,6 @@ using ExceptionlessTest.Jobs;
 using Microsoft.Extensions.Hosting;
 using Quartz;
 
-Console.WriteLine("Hello, World!");
 Host.CreateDefaultBuilder(args)
     .ConfigureLogging(build => build.AddExceptionless())
     .ConfigureServices((hostContext, services) =>
