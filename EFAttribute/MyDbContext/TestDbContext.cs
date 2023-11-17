@@ -5,6 +5,16 @@ namespace EFAttribute.MyDbContext
 {
     public class TestDbContext:DbContext
     {
+        public TestDbContext(string connection):base(GetDbContextOptions(connection))
+        {
+            
+        }
+        private static DbContextOptions<TestDbContext> GetDbContextOptions(string connectionString)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<TestDbContext>();
+            optionsBuilder.UseSqlite(connectionString);
+            return optionsBuilder.Options;
+        }
         public TestDbContext(DbContextOptions<TestDbContext> options):base(options)
         {
         }

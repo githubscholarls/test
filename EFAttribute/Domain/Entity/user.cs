@@ -2,6 +2,7 @@
 
 namespace EFAttribute.Domain.Entity
 {
+    [Table("user")]
     public class user
     {
         public int id { get; set; }

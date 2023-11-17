@@ -6,6 +6,8 @@ using EFAttribute.Helper;
 using EFAttribute.MyDbContext;
 using Iced.Intel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -33,14 +35,14 @@ namespace EFAttribute.Controllers
         {
             {
                 //22.2s   gc0
-                using (new OperationTimer("foreach ExecuteSqlInterpolated 100"))
-                {
-                    var sqlinter = "test01;update \"user\" set name = sqlinter where name='test1001'";
-                    for (int i = 0; i < 1000; i++)
-                    {
-                        testDbContext.Database.ExecuteSqlInterpolated($"insert into \"user\"(name) values({sqlinter});");
-                    }
-                }
+                //using (new OperationTimer("foreach ExecuteSqlInterpolated 100"))
+                //{
+                //    var sqlinter = "test01;update \"user\" set name = sqlinter where name='test1001'";
+                //    for (int i = 0; i < 1000; i++)
+                //    {
+                //        testDbContext.Database.ExecuteSqlInterpolated($"insert into \"user\"(name) values({sqlinter});");
+                //    }
+                //}
                 //23.7s  gc5
                 //using (new OperationTimer("foreach ExecuteSqlInterpolated 1000"))
                 //{
@@ -62,35 +64,22 @@ namespace EFAttribute.Controllers
                 //    testDbContext.Database.ExecuteSqlRawAsync(str.ToString(), list);
                 //}
                 //1s  gc0  无效果
-                using (new OperationTimer("foreach ExecuteSqlInterpolated 1000"))
-                {
-                    var sqlinter = "test01;update \"user\" set name = sqlinter where name='test1002'";
-                    var str = new StringBuilder();
-                    List<object> list = new();
-                    for (int i = 0; i < 1000; i++)
-                    {
-                        str.Append($"insert into \"user\"(name,sex) values(@name{i},@sex{i});");
-                        list.Add(new { name = sqlinter, sex = "nan" + i });
-                    }
-                    testDbContext.Database.ExecuteSqlRawAsync(str.ToString(), list);
-                }
+                //using (new OperationTimer("foreach ExecuteSqlInterpolated 1000"))
+                //{
+                //    var sqlinter = "test01;update \"user\" set name = sqlinter where name='test1002'";
+                //    var str = new StringBuilder();
+                //    List<object> list = new();
+                //    for (int i = 0; i < 1000; i++)
+                //    {
+                //        str.Append($"insert into \"user\"(name,sex) values(@name{i},@sex{i});");
+                //        list.Add(new { name = sqlinter, sex = "nan" + i });
+                //    }
+                //    testDbContext.Database.ExecuteSqlRawAsync(str.ToString(), list);
+                //}
             }
-
-            //BenchContext.TestDbContext= testDbContext;
-            //BenchmarkRunner.Run<BenchMarkTest>();
-
-            BenchmarkRunner.Run<BenchMarkController>();
+            BenchmarkRunner.Run<BenchMarkTest>();
 
             return Ok();
-        }
-        [NonAction]
-        public IEnumerable<TestDbContext?> GetContext()
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                var context = serviceProvider.CreateScope().ServiceProvider.GetService<TestDbContext>();
-                yield return context;
-            }
         }
 
         #region BenchMark
@@ -98,7 +87,6 @@ namespace EFAttribute.Controllers
 
         [NonAction]
         [Benchmark]
-        [ArgumentsSource(nameof(GetContext))]
         public void TestParameterSource(TestDbContext? context)
         {
             if (context is null)
@@ -112,29 +100,28 @@ namespace EFAttribute.Controllers
 
         #endregion
     }
-
-    public static class BenchContext
-    {
-        public static IServiceProvider serviceProvider;
-        public static TestDbContext TestDbContext;
-        public static int bench_i;
-        public static int bench_j;
-    }
-
     [NonController]
-    [MemoryDiagnoser]
     public class BenchMarkTest
     {
-        [Benchmark(sourceCodeLineNumber: 10)]
-        public void ExecuteSqlInterpolated(TestDbContext testDbContext)
+        private int _queryId = 4;
+        private TestDbContext testDbContext;
+
+
+        [GlobalSetup]
+        public async Task SetUp()
         {
-            Console.WriteLine(BenchContext.bench_i++);
-            var sqlinter = "test01;update \"user\" set name = sqlinter where name='test1001'";
-            for (int i = 0; i < 1; i++)
-            {
-                testDbContext.Database.ExecuteSqlInterpolated($"insert into \"user\"(name) values({sqlinter});");
-            }
+            testDbContext = new TestDbContext("Data Source = wms.db");
         }
+        //[Benchmark(sourceCodeLineNumber: 10)]
+        //public void ExecuteSqlInterpolated(TestDbContext testDbContext)
+        //{
+        //    Console.WriteLine(BenchContext.bench_i++);
+        //    var sqlinter = "test01;update \"user\" set name = sqlinter where name='test1001'";
+        //    for (int i = 0; i < 1; i++)
+        //    {
+        //        testDbContext.Database.ExecuteSqlInterpolated($"insert into \"user\"(name) values({sqlinter});");
+        //    }
+        //}
 
         //[Benchmark(sourceCodeLineNumber: 10)]
         //public void BlukExecuteSqlInterpolated()
@@ -154,6 +141,35 @@ namespace EFAttribute.Controllers
         //    }
         //    BenchContext.TestDbContext.Database.ExecuteSqlRawAsync(str.ToString(), list);
         //}
+
+
+        //private readonly Func<TestDbContext, IEnumerable<string>> GetNames = (Func<TestDbContext, IEnumerable<string>>)EF.CompileAsyncQuery((TestDbContext context) =>
+        //(from u in context.user.Where(u => u.id > 0) select u.name).ToList());
+        //private readonly Func<TestDbContext, int,int> GetFirst = EF.CompileQuery((TestDbContext context, int id) =>
+        //(from u in context.user where u.id == id select u.id).FirstOrDefault());
+
+        //[Benchmark(sourceCodeLineNumber: 10)]
+        //public void CompileQueryTest()
+        //{
+        //    var a = EF.CompileQuery((TestDbContext context) =>
+        //(from u in context.user.Where(u => u.id > 0) select u.name).AsQueryable()).Invoke(testDbContext);
+        //}
+        //[Benchmark(sourceCodeLineNumber: 10)]
+        //public void NoCompileQueryTest()
+        //{
+        //    var a = (from u in testDbContext.user.Where(u => u.id > 0) select u.name).AsEnumerable();
+        //}
+        //[Benchmark]
+        //public void CompileQueryFirstTest()
+        //{
+        //    var a = GetFirst.Invoke(testDbContext, _queryId);
+        //}
+        [Benchmark]
+        public void NoCompileQueryFirstTest()
+        {
+            //var a = (from u in testDbContext.user where u.id == _queryId select u.id).FirstOrDefault();
+            var a = testDbContext.user.FirstOrDefault();
+        }
     }
 
 }
