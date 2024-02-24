@@ -18,20 +18,23 @@ RUN dotnet publish "WebApiTest.csproj" -c Release -o /app/publish /p:UseAppHost=
 
 FROM base AS final
 WORKDIR /app
+#COPY WebApiTest/procdump.deb .
 COPY --from=publish /app/publish .
 
+ENTRYPOINT ["dotnet", "WebApiTest.dll"]
+
 # 1. 使用中科大镜像源
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+#RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
 
 # 2. 安装 wget
-RUN apt-get update && apt-get install -y gdb
-RUN dpkg -i procdump.deb
+#RUN apt-get update && apt-get install -y gdb
+#RUN dpkg -i procdump.deb
 
-RUN echo "#!/bin/bash \n\
-procdump -c 20 -n 2 -s 5 -w dotnet /dumps & \n\
-dotnet \$1 \n\
-" > ./start.sh
+#RUN echo "#!/bin/bash \n\
+#procdump -c 20 -n 2 -s 5 -w dotnet /dumps & \n\
+#dotnet \$1 \n\
+#" > ./start.sh
 
-RUN chmod +x ./start.sh
+#RUN chmod +x ./start.sh
 
-ENTRYPOINT ["./start.sh", "AspNetWebApi.dll"]
+#ENTRYPOINT ["./start.sh", "AspNetWebApi.dll"]

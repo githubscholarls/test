@@ -203,7 +203,12 @@ builder.Services.AddOutputCache(options =>
     options.AddBasePolicy(builder => builder.With(c => c.HttpContext.Request.Path.StartsWithSegments("/js")).Expire(TimeSpan.FromDays(1)));
     options.AddBasePolicy(builder => builder.With(c => c.HttpContext.Request.Path.StartsWithSegments("/js")).NoCache());
 
+    //方便清除所有缓存
+    options.AddBasePolicy(builder => builder.Tag("tag-all"));
 
+    options.AddPolicy("article", b => b.Tag("article"));
+    options.AddPolicy("category", b => b.Tag("category"));
+    options.AddPolicy("home", b => b.Tag("home"));
     options.AddPolicy("NoCache", b => b.NoCache());
 });
 #endif

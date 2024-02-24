@@ -42,5 +42,4 @@ dotnet \$1 \n\
 " > /app/start.sh
 
 RUN chmod +x /app/start.sh
-
 ENTRYPOINT ["/app/start.sh", "WebApiNet5.dll"]

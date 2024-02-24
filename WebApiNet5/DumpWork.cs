@@ -15,9 +15,9 @@ namespace WebApiNet5
         }
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            
 
 
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

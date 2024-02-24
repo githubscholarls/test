@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text;
+using System.Web;
 using WebApiTest.Utility;
 
 namespace WebApiTest.Controllers
@@ -28,6 +29,7 @@ namespace WebApiTest.Controllers
             str.AppendLine("鉴权顺序优先级：");
             str.AppendLine("                没指定scheme使用最后一个调用的AddAuthentication defaultScheme");
             str.AppendLine("                cookie和自定义并存  先自定义再cookie（自定义重定向则不指定cookie中配置loginPath）");
+            str.AppendLine("                cookie和jwt  只执行jwt");
             str.AppendLine("                多个自定义，按照authorize顺序执行方案");
 
             return Ok(str.ToString());
@@ -222,19 +224,22 @@ namespace WebApiTest.Controllers
             var cookies = HttpContext.Request.Cookies["Cookies"];
             if (cookies != null)
             {
+                //解析cookies 获取信息，判断是否有权限
+
                 var claimIdentity = new ClaimsIdentity("Cookies123");
-                claimIdentity.AddClaim(new Claim(ClaimTypes.Name, "lishuai"));
-                claimIdentity.AddClaim(new Claim(ClaimTypes.Role, "Admin"));
+                //claimIdentity.AddClaim(new Claim(ClaimTypes.Name, "lishuai"));
+                //claimIdentity.AddClaim(new Claim(ClaimTypes.Role, "Admin"));
 
                 //指定cookie鉴权 Cookies方案通过
                 await HttpContext.SignInAsync(Consts.Cookies, new ClaimsPrincipal(claimIdentity));
                 var ru = HttpContext.Request.Query["ReturnUrl"];
                 if (ru.Any())
-                    return Redirect(ru.First() ?? "/");
+                    return Redirect(HttpUtility.UrlDecode(ru.First() ?? "/"));
                 return Redirect("/");
             }
             else
             {
+                return Unauthorized();
                 return Ok("cookies 1 ,未通过鉴权");
             }
         }
@@ -245,6 +250,7 @@ namespace WebApiTest.Controllers
         [HttpGet]
         private IActionResult Check12()
         {
+            return StatusCode(403);
             return Ok("cookies 1 ，授权未通过");
         }
 
