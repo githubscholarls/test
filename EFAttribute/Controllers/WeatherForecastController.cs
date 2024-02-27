@@ -1,9 +1,14 @@
 using EFAttribute.Domain.Entity;
 using EFAttribute.MyDbContext;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SQLitePCL;
 using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Text;
 
 namespace EFAttribute.Controllers
 {
@@ -18,11 +23,13 @@ namespace EFAttribute.Controllers
 
         private readonly ILogger<WeatherForecastController> _logger;
         private readonly TestDbContext dbContext;
+        private readonly TestCpuContext testCpuContext;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, TestDbContext testDbContext)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, TestDbContext testDbContext, TestCpuContext testCpuContext)
         {
             _logger = logger;
             dbContext = testDbContext;
+            this.testCpuContext = testCpuContext;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
@@ -60,8 +67,8 @@ namespace EFAttribute.Controllers
                 {
                     name = "lishuai",
                     sex = "nan",
-                    schoolAddress = "zhengzhou",
-                    bornAddress = "henan"
+                    //schoolAddress = "zhengzhou",
+                    //bornAddress = "henan"
                 };
                 dbContext.Add(usr);
                 dbContext.SaveChanges();
@@ -143,11 +150,11 @@ namespace EFAttribute.Controllers
                 //dbContext.SaveChanges();
 
                 //更新部分字段
-                var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach Attach", bornAddress = "南阳 IsModify Is False" };
-                dbContext.Entry(usr1).Property(u => u.homeAddress).IsModified = true;
+                //var usr1 = new user() { id = attachId, homeAddress = "金水Id Attach Attach", bornAddress = "南阳 IsModify Is False" };
+                //dbContext.Entry(usr1).Property(u => u.homeAddress).IsModified = true;
                 dbContext.SaveChanges();
 
-                dbContext.Entry(usr1).State = EntityState.Detached;
+                //dbContext.Entry(usr1).State = EntityState.Detached;
 
                 var attach1 = dbContext.user.Where(u => u.name == "attach add").FirstOrDefault();
 
@@ -202,12 +209,177 @@ namespace EFAttribute.Controllers
             {
                 var strr = $"select  id,name,sex from \"user\" where name={str}";
                 //SQLite Error 1: 'near "@p0": syntax error'.
-                dbContext.Database.ExecuteSql($"{strr}");
+                //net 7
+                //dbContext.Database.ExecuteSql($"{strr}");
                 dbContext.Database.ExecuteSqlRaw($"{strr}");
                 dbContext.Database.ExecuteSqlInterpolated($"{strr}");
             }
 
             return Ok();
-         }
+        }
+
+
+        [HttpGet]
+        public IActionResult AddTestDataBeforeTestDetectChanges()
+        {
+            var count = testCpuContext.user.Count();
+
+            //初始化10万数据
+
+            var insertCount = 100000 - count;
+            List<user> addList = new();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < insertCount; i++)
+            {
+                //addList.Add(new() { name = "testDetectChangesName" + i });
+
+                sb.Append($"INSERT INTO \"user\" (name) VALUES ('testDetectChangesName{i}');");
+            }
+            testCpuContext.Database.ExecuteSqlRaw($"{sb}");
+
+            //dbContext.user.AddRange(addList);
+            testCpuContext.SaveChanges();
+            return Ok();
+        }
+
+        [HttpGet]
+        public IActionResult Test1DetectChangesCpuHigh()
+        {
+
+            var watch = new Stopwatch();
+            watch.Start();
+
+            var list = testCpuContext.user.ToList();
+
+            if (list.Count() > 3000)
+            {
+                int MaxCount = list.Count() / 3000 + 1;
+                for (int i = 0; i < MaxCount; i++)
+                {
+                    var list_editchelineDetails = list.OrderBy(p => p.id).Skip(i * 3000).Take(3000).ToList();
+                    if (list_editchelineDetails != null && list_editchelineDetails.Count() > 0)
+                    {
+                        for (int j = 0; j < list_editchelineDetails.Count(); j++)
+                        {
+                            list_editchelineDetails[j].name = "v1"+ list_editchelineDetails[j].name;
+                            list_editchelineDetails[j].sex = "v1sex";
+                            list_editchelineDetails[j].last_login_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                            testCpuContext.Entry<pguser>(list_editchelineDetails[j]).Property("name").IsModified = true;
+                            testCpuContext.Entry<pguser>(list_editchelineDetails[j]).Property("sex").IsModified = true;
+                            testCpuContext.Entry<pguser>(list_editchelineDetails[j]).Property("last_login_time").IsModified = true;
+                        }
+                        testCpuContext.SaveChanges();
+                    }              
+                }
+            }
+
+
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
+            return Ok();
+
+
+
+        }
+        [HttpGet]
+        public IActionResult Test2DetectChangesCpuHigh()
+        {
+            var watch = new Stopwatch();
+            watch.Start();
+
+
+            var list = testCpuContext.user.ToList();
+
+            var a = testCpuContext.ChangeTracker.AutoDetectChangesEnabled;
+            Console.WriteLine("AutoDetectChangesEnabled默认值"+a.ToString());
+
+            var b = testCpuContext.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            Console.WriteLine("AutoDetectChangesEnabled修改后" + b.ToString());
+
+            if (list.Count() > 3000)
+            {
+                int MaxCount = list.Count() / 3000 + 1;
+                for (int i = 0; i < MaxCount; i++)
+                {
+                    var list_editchelineDetails = list.OrderBy(p => p.id).Skip(i * 3000).Take(3000).ToList();
+                    if (list_editchelineDetails != null && list_editchelineDetails.Count() > 0)
+                    {
+                        for (int j = 0; j < list_editchelineDetails.Count(); j++)
+                        {
+                            //Console.WriteLine("修改前:" + dbContext.Entry(list_editchelineDetails[j]).State);  //  Unchanged
+                            //Console.WriteLine("修改前:"+list_editchelineDetails[j].name);
+                            //Console.WriteLine("修改前:" + list_editchelineDetails[j].sex);
+                            //Console.WriteLine("修改前:" + list_editchelineDetails[j].lastLoginTime);
+
+
+                            //必须设置 IsModified 
+                            list_editchelineDetails[j].name = "v2" + list_editchelineDetails[j].name;
+                            list_editchelineDetails[j].sex = "v2sex";
+                            list_editchelineDetails[j].last_login_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                            testCpuContext.Entry(list_editchelineDetails[j]).Property(x => x.name).IsModified = true;
+                            testCpuContext.Entry(list_editchelineDetails[j]).Property(x => x.sex).IsModified = true;
+                            testCpuContext.Entry(list_editchelineDetails[j]).Property(x => x.last_login_time).IsModified = true;
+
+                            //不使用  Property("add_vyear_new").IsModified = true;    且    dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
+                            //dbContext.Entry(list_editchelineDetails[j]).Property(x => x.name).CurrentValue = "v2" + list_editchelineDetails[j].name;
+                            //dbContext.Entry(list_editchelineDetails[j]).Property(x => x.sex).CurrentValue = "v2sex";
+                            //dbContext.Entry(list_editchelineDetails[j]).Property(x => x.lastLoginTime).CurrentValue = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+
+
+                            //Console.WriteLine("修改后:" + list_editchelineDetails[j].name);
+                            //Console.WriteLine("修改后:" + list_editchelineDetails[j].sex);
+                            //Console.WriteLine("修改后:" + list_editchelineDetails[j].lastLoginTime);
+                            //Console.WriteLine("修改后:" + dbContext.Entry(list_editchelineDetails[j]).State);
+                        }
+                        testCpuContext.SaveChanges();
+                    }
+                }
+            }
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
+
+            return Ok();
+
+        }
+
+        [HttpGet]
+        public IActionResult Test3FromSqlNoDetectChanges()
+        {
+            var watch = new Stopwatch();
+            watch.Start();
+
+            var list = testCpuContext.user.ToList();
+
+            if (list.Count() > 3000)
+            {
+                int MaxCount = list.Count() / 3000 + 1;
+                for (int i = 0; i < MaxCount; i++)
+                {
+                    var list_editchelineDetails = list.OrderBy(p => p.id).Skip(i * 3000).Take(3000).ToList();
+                    if (list_editchelineDetails != null && list_editchelineDetails.Count() > 0)
+                    {
+                        FormattableString fs;
+                        StringBuilder sb = new();
+
+                        List<NpgsqlParameter> parameters = new();
+                        for (int j = 0; j < list_editchelineDetails.Count(); j++)
+                        {
+                            sb.Append($"update \"user\" set name = 'v3',sex='nv',verify=@curj{j} where id = @uid{j};");
+
+                            parameters.Add(new NpgsqlParameter($"@curj{j}", j));
+                            parameters.Add(new NpgsqlParameter($"@uid{j}", list_editchelineDetails[j].id));
+                            //dbContext.Database.ExecuteSqlInterpolated($"update user set name = 'v3',sex='nv' where id = @uid{j};");
+                        }
+                        testCpuContext.Database.ExecuteSqlRaw(sb.ToString(), parameters);
+                    }
+                }
+            }
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
+            return Ok();
+        }
     }
 }

@@ -17,10 +17,10 @@ namespace EFAttribute.Domain.Entity
 
         #region userPosition Table
 
-        public string? bornAddress { get; set; }
-        public string? schoolAddress { get; set; }
-        public string? homeAddress { get; set; }
-        public string? nowAddress { get; set; }
+        //public string? bornAddress { get; set; }
+        //public string? schoolAddress { get; set; }
+        //public string? homeAddress { get; set; }
+        //public string? nowAddress { get; set; }
         #endregion
     }
 }
