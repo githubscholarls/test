@@ -242,6 +242,16 @@ namespace EFAttribute.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// --10万数据更新
+        //--cpu 30%   67418ms
+        //select count(1) from "user" u where "name" like 'v1%'
+        //--cpu 18%   69494ms
+        //select count(1) from "user" u where "name" like 'v2%'
+        //--cpu 8%    55374ms
+        //select count(1) from "user" u where "name" like 'v3%'
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public IActionResult Test1DetectChangesCpuHigh()
         {
@@ -261,7 +271,7 @@ namespace EFAttribute.Controllers
                     {
                         for (int j = 0; j < list_editchelineDetails.Count(); j++)
                         {
-                            list_editchelineDetails[j].name = "v1"+ list_editchelineDetails[j].name;
+                            list_editchelineDetails[j].name = "v1" + list_editchelineDetails[j].name;
                             list_editchelineDetails[j].sex = "v1sex";
                             list_editchelineDetails[j].last_login_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
@@ -270,7 +280,7 @@ namespace EFAttribute.Controllers
                             testCpuContext.Entry<pguser>(list_editchelineDetails[j]).Property("last_login_time").IsModified = true;
                         }
                         testCpuContext.SaveChanges();
-                    }              
+                    }
                 }
             }
 
@@ -292,7 +302,7 @@ namespace EFAttribute.Controllers
             var list = testCpuContext.user.ToList();
 
             var a = testCpuContext.ChangeTracker.AutoDetectChangesEnabled;
-            Console.WriteLine("AutoDetectChangesEnabled默认值"+a.ToString());
+            Console.WriteLine("AutoDetectChangesEnabled默认值" + a.ToString());
 
             var b = testCpuContext.ChangeTracker.AutoDetectChangesEnabled = false;
 
