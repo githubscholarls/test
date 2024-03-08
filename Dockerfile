@@ -24,22 +24,22 @@ COPY ./WebApiNet5/procdump.deb .
 
 #老的运行
 COPY --from=publish /app/publish .
-#ENTRYPOINT ["dotnet", "WebApiNet5.dll"]
+ENTRYPOINT ["dotnet", "WebApiNet5.dll"]
 #老的运行
 
 
 # 1. 使用中科大镜像源
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+#RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
 
 # 2. 安装 wget
-RUN apt-get update && apt-get install -y gdb
+#RUN apt-get update && apt-get install -y gdb
 
-RUN dpkg -i procdump.deb
-RUN mkdir /dumps
-RUN echo "#!/bin/bash \n\
-procdump -c 80 -n 2 -s 2 -w dotnet /dumps & \n\
-dotnet \$1 \n\
-" > /app/start.sh
+#RUN dpkg -i procdump.deb
+#RUN mkdir /dumps
+#RUN echo "#!/bin/bash \n\
+#procdump -c 80 -n 2 -s 2 -w dotnet /dumps & \n\
+#dotnet \$1 \n\
+#" > /app/start.sh
 
-RUN chmod +x /app/start.sh
-ENTRYPOINT ["/app/start.sh", "WebApiNet5.dll"]
+#RUN chmod +x /app/start.sh
+#ENTRYPOINT ["/app/start.sh", "WebApiNet5.dll"]
