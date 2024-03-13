@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using RestSharp;
 using System.Security.Cryptography;
 using System.Text;
@@ -49,9 +50,10 @@ namespace WebApiTest.Controllers
             }
             var res = System.Text.RegularExpressions.Regex.Unescape(response.Content);
 
-
+            //{"from":"zh","to":"th","trans_result":[{"src":"卧室不行哦","dst":"ห้องนอนไม่ได้"}]}
             //{ "from":"zh","to":"ru","trans_result":[{ "src":"发生的发色人情味儿","dst":"Происходящий человеческий запах."}]}
-            return Ok(res);
+            var resObj = Newtonsoft.Json.JsonConvert.DeserializeObject<BDTranslateRes>(res);
+            return Ok(resObj);
         }
         // 计算MD5值
         public static string EncryptString(string str)
@@ -72,5 +74,17 @@ namespace WebApiTest.Controllers
             return sb.ToString();
         }
 
+    }
+
+    public class BDTranslateRes
+    {
+        public string from { get; set; }
+        public string to { get; set; }
+        public List<TransResult> trans_result { get; set; }
+    }
+    public class TransResult
+    {
+        public string src { get; set; }
+        public string dst { get; set; }
     }
 }
