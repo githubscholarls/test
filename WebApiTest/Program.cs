@@ -23,6 +23,8 @@ using HealthChecks.UI.Client;
 using WebApiTest.Domain.Options;
 using WebApiTest.Application.Common.Delegate;
 using Polly;
+using Microsoft.AspNetCore.Diagnostics;
+using WebApiTest.Filter;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -34,7 +36,11 @@ builder.Logging.AddConsole();
 
 builder.Services.Configure<CustomSetting>(builder.Configuration.GetSection("CustomSetting"));
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    //优先级高于app.UseExceptionHandler
+    options.Filters.Add<ApiExceptionFilterAttribute>();
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -289,6 +295,29 @@ app.MapGet("/ims", Gravatar.WriteGravatar).CacheOutput();
 //    app.UseSwagger();
 //    app.UseSwaggerUI();
 //}
+if (app.Environment.IsDevelopment())
+{
+    //异常处理
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "text/html";
+            var exceptionHandlerPathFeature =
+                context.Features.Get<IExceptionHandlerPathFeature>();
+            if (exceptionHandlerPathFeature?.Error is FileNotFoundException)
+            {
+                await context.Response.WriteAsync("File error thrown!");
+            }
+            else
+            {
+                await context.Response.WriteAsync("error");
+            }
+        });
+    });
+}
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
