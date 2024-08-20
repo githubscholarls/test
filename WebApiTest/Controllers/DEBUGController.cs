@@ -166,5 +166,25 @@ namespace WebApiTest.Controllers
 
             return Ok();
         }
+        
+        public record class FromBodyContent(string obj);
+        [HttpPost]
+        public async Task<IActionResult> MoreGetFromBodyContent(FromBodyContent obj)
+        {
+            await Console.Out.WriteLineAsync("接口中获取body内容为：" + Newtonsoft.Json.JsonConvert.SerializeObject(obj));
+
+            //多次读取
+            //Request.EnableBuffering();
+            //using (var rea = new StreamReader(Request.Body))
+            //{
+            //    var body = await rea.ReadToEndAsync();
+            //    Console.WriteLine(body.ToString());
+            //    // Do something
+            //    Request.Body.Position = 0;
+            //    body = await rea.ReadToEndAsync();
+            //}
+
+            return Ok();
+        }
     }
 }
