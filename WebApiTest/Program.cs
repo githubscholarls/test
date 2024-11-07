@@ -227,7 +227,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMyApp", builder =>
     {
-        builder.WithOrigins("http://localhost:8080")  // 允许的前端地址
+        builder.WithOrigins("http://localhost:8080","http://172.72.0.77")  // 允许的前端地址
                .AllowAnyMethod()                    // 允许任何请求方法（GET, POST, PUT, DELETE等）
                .AllowAnyHeader();                   // 允许任何头部
     });
