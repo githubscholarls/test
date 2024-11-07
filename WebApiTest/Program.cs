@@ -26,6 +26,7 @@ using Polly;
 using Microsoft.AspNetCore.Diagnostics;
 using WebApiTest.Filter;
 using WebApiTest.Middleware;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -221,7 +222,20 @@ builder.Services.AddOutputCache(options =>
 #endif
 #endregion
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowMyApp", builder =>
+    {
+        builder.WithOrigins("http://localhost:8080")  // 允许的前端地址
+               .AllowAnyMethod()                    // 允许任何请求方法（GET, POST, PUT, DELETE等）
+               .AllowAnyHeader();                   // 允许任何头部
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowMyApp");
 
 #region .net7使用缓存
 
@@ -323,7 +337,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseMiddleware<GetBodyContentMiddleware>();
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

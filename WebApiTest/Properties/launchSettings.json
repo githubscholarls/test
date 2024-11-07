@@ -2,8 +2,8 @@
   "profiles": {
     "WebApiTest": {
       "commandName": "Project",
-      "launchBrowser": true,
-      "launchUrl": "swagger",
+      //"launchBrowser": true,
+      //"launchUrl": "swagger", 
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
