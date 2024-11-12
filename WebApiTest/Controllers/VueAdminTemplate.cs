@@ -39,21 +39,22 @@ namespace WebApiTest.Controllers
         [HttpGet]
         public IActionResult list()
         {
-            var items = new List<string>() { "撒发射点", "sf法撒旦", "的萨芬" };
-            var res = new ListRes() { data = new ListData() { items = items } };
-            return new JsonResult(new ApiResponse<ListRes>() { data = res });
+            var items = new List<ListItem>() { new ListItem() { title = "标题1", author = "上作者" }, new ListItem() { title = "第一本书", author = "刘建伟" } };
+            return new JsonResult(new ApiResponse<ListData>() { data = new ListData() { items = items } });
 
         }
 
-        public class ListRes
-        {
-            public ListData data { get; set; } = new();
-        }
         public class ListData
         {
-            public List<string> items { get; set; } = new();
+            public List<ListItem> items { get; set; } = new();
         }
 
+        public class ListItem
+        {
+            public string title { get; set; }
+
+            public string author { get; set; }
+        }
     }
 
     
