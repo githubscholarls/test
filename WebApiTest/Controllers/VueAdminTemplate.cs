@@ -44,7 +44,7 @@ namespace WebApiTest.Controllers
         public IActionResult login()
         {
             //return Ok(Newtonsoft.Json.JsonConvert.SerializeObject(new { username = "lishuai", code = 20000 }));
-            return new JsonResult(new { data = new { name = "lishuai", token = "this is token" }, code = 20000 });
+            return new JsonResult(new { data = new { name = "lishuai", token = "this is token" }, code = 20000 }); 
         }
         [HttpGet]
         public IActionResult info()
@@ -59,15 +59,25 @@ namespace WebApiTest.Controllers
     public class VueAdminTableTemplate : ControllerBase
     {
         public static Guid LastId = Guid.Empty;
-        public static List<ListItem> items = new List<ListItem>() { new ListItem() { id = Guid.NewGuid(), title = "标题1", author = "上作者" }, new ListItem() { id = Guid.NewGuid(), title = "第一本书", author = "刘建伟" } };
+        public static List<ListItem> items = new List<ListItem>() { new ListItem() { id = Guid.NewGuid(), title = "标题1", author = "上作者" }, new ListItem() { id = Guid.NewGuid(), title = "第一本书", author = "刘建伟" }, new ListItem() { id = Guid.NewGuid(), title = "发顺丰", author = "士大夫", state = 1 } };
 
 
-        [HttpGet]
-        public IActionResult list()
+        [HttpPost]
+        public async Task<ApiResponse<ListData>> list([FromBody]listdto dto)
         {
-            return new JsonResult(ApiResponse<ListData>.Success(new ListData() { items = items }));
+            var list = items.ToList();
+            if(dto.state is not null && dto.state.Count > 0)
+            {
+                list = list.Where(l => dto.state.Contains(l.state)).ToList();
+            }
+            return ApiResponse<ListData>.Success(new ListData() { items = list });
 
         }
+        public class listdto
+        {
+            public List<int>? state { get; set; }
+        }
+
         [HttpPost]
         public ApiResponse<string> ModifyId([FromBody] ListItem item)
         {
@@ -105,6 +115,7 @@ namespace WebApiTest.Controllers
             {
                 return ApiResponse<string>.Dialog($"请问您确定删除 标题为 {items.Where(i => i.id == id).FirstOrDefault()?.title ?? ""} 的作品吗 ");
             }
+            items.RemoveAll(i => i.id == id);
             return ApiResponse<string>.Success("删除成功");
         }
 
@@ -165,6 +176,8 @@ namespace WebApiTest.Controllers
             public string author { get; set; }
 
             public List<string> files { get; set; } = new();
+
+            public int state { get; set; } = 0;
         }
     }
 
