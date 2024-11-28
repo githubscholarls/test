@@ -26,7 +26,7 @@ namespace WebApiTest.Middleware
             var requestBody = await requestReader.ReadToEndAsync();
             request.Body.Position = 0;
 
-            await Console.Out.WriteLineAsync("中间件请求体：" + requestBody);
+            await Console.Out.WriteLineAsync("中间件请求体：" + requestBody.Substring(0, requestBody.Count() > 100 ? 100 : requestBody.Count()));
             // 执行其他中间件
             await next(context);
 
