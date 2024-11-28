@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 using Polly;
+using System.Collections.Concurrent;
+using System.Drawing.Imaging;
 using System.Net;
 using WebApiTest.Utility;
 
@@ -72,6 +74,14 @@ namespace WebApiTest.Controllers
 
         public static Guid LastId = Guid.Empty;
         public static List<ListItem> items = new List<ListItem>() { new ListItem() { id = Guid.NewGuid(), title = "标题1", author = "上作者" }, new ListItem() { id = Guid.NewGuid(), title = "第一本书", author = "刘建伟" }, new ListItem() { id = Guid.NewGuid(), title = "发顺丰", author = "士大夫", state = 1 } };
+
+
+        private static string basePath = Environment.CurrentDirectory;
+        /// <summary>
+        /// 分片上传文件
+        /// </summary>
+        private static ConcurrentDictionary<string, int> countDict =
+            new ConcurrentDictionary<string, int>();
 
 
         [HttpPost]
@@ -173,101 +183,120 @@ namespace WebApiTest.Controllers
             return ApiResponse<List<string>>.Success(paths);
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> UploadBigAsync(UploadBigDto dto)
-        //{
-        //    if (!MultipartRequestHelper.IsMultipartContentType(Request.ContentType))
-        //    {
-        //        ModelState.AddModelError("File",
-        //            $"The request couldn't be processed (Error 1).");
-        //        // Log error
-
-        //        return BadRequest(ModelState);
-        //    }
-        //    try
-        //    {
-        //        //获取参数                    
-        //        if (dto.uid.Length == 0 || dto.type.Length == 0)
-        //        {
-        //            logger.LogError("无效参数");
-        //            return BadRequest();
-        //        }
 
 
-        //        //获取上传的文件分片
-        //        var file = HttpContext.Request.Form.Files.FirstOrDefault();
-        //        if (file == null || file.Length == 0)
-        //        {
-        //            logger.LogError($"没有文件数据");
-        //            return BadRequest();
-        //        }
+        [HttpPost]
+        public async Task<ApiResponse<List<string>>> UploadBigAsync(UploadBigDto dto)
+        {
+            try
+            {
+                //获取参数                    
+                if (dto.uid.Length == 0 || dto.type.Length == 0)
+                {
+                    logger.LogError("无效参数");
+                    return new ApiResponse<List<string>>() { code = 410 };
+                }
 
-        //        //后缀验证
-        //        var ext = Path.GetExtension(file.FileName);
-        //        var temp = Path.Combine(dto.physicalPath, "tmp");
-        //        if (!Directory.Exists(temp))
-        //        {
-        //            Directory.CreateDirectory(temp);
-        //        }
-        //        var chunkFilename = Path.Combine(physicalPath, temporaryFolder, "uploader-" + identifier + "." + chunkNumber);
-        //        try
-        //        {
-        //            using (var fileStream = File.OpenWrite(chunkFilename))
-        //            {
-        //                var stream = file.OpenReadStream();
-        //                stream.CopyTo(fileStream);
-        //                fileStream.Flush(true);
-        //                countDict.AddOrUpdate(identifier, 1, (key, oldValue) => oldValue + 1);
-        //            }
 
-        //            if (chunkNumber == totalChunks)
-        //            {
-        //                //验证块的完整性
-        //                while (true)
-        //                {
-        //                    if (countDict.GetValueOrDefault(identifier) < totalChunks)
-        //                    {
-        //                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-        //                    }
-        //                    else
-        //                    {
-        //                        countDict.Remove(identifier, out _);
-        //                        break;
-        //                    }
-        //                }
+                //获取上传的文件分片
+                var file = HttpContext.Request.Form.Files.FirstOrDefault();
+                if (file == null || file.Length == 0)
+                {
+                    logger.LogError($"没有文件数据");
+                    return new ApiResponse<List<string>>() { code = 411 };
+                }
 
-        //                //merge file;
-        //                string[] chunkFiles = Directory.GetFiles(
-        //                    Path.Combine(_config.PhysicalPath, temporaryFolder),
-        //                    "uploader-" + identifier + ".*",
-        //                    SearchOption.TopDirectoryOnly);
-        //                //var fileUrl = await MergeChunkFiles(payload, ext, chunkFiles); 
-        //                var fileUrl = await MergeChunkFiles(context, uid, type, ext, chunkFiles, filename, totalSize);
+                //后缀验证
+                var ext = Path.GetExtension(file.FileName);
+                var temp = Path.Combine(basePath,"tmp");
+                if (!Directory.Exists(temp))
+                {
+                    Directory.CreateDirectory(temp);
+                }
+                var chunkFilename = Path.Combine(basePath, temp, "uploader-" + dto.identifier + "." + dto.chunkNumber);
+                try
+                {
+                    using (var fileStream = System.IO.File.OpenWrite(chunkFilename))
+                    {
+                        var stream = file.OpenReadStream();
+                        stream.CopyTo(fileStream);
+                        fileStream.Flush(true);
+                        countDict.AddOrUpdate(dto.identifier, 1, (key, oldValue) => oldValue + 1);
+                    }
 
-        //                //await context.Response.WriteAsync(new ApiResponse<string>()
-        //                //{
-        //                //    result = 200,
-        //                //    msg = "请求成功",
-        //                //    data = fileUrl
-        //                //}.toJson());
-        //                var Json = new ApiResponse<Files>(200, "请求成功", fileUrl).toJson();
-        //                await context.Response.WriteAsync(Json);
-        //            }
-        //            else
-        //            {
-        //                return Ok("片上传完成");
-        //            }
-        //        }
-        //        catch (Exception exp)
-        //        {
-        //            logger.LogError(exp.ToString());
-        //            return BadRequest();
-        //        }
+                    if (dto.chunkNumber == dto.totalChunks)
+                    {
+                        //验证块的完整性
+                        while (true)
+                        {
+                            if (countDict.GetValueOrDefault(dto.identifier) < dto.totalChunks)
+                            {
+                                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                            }
+                            else
+                            {
+                                countDict.Remove(dto.identifier, out _);
+                                break;
+                            }
+                        }
 
-        //    }
-        //    catch { }
+                        //merge file;
+                        string[] chunkFiles = Directory.GetFiles(
+                            Path.Combine(basePath, temp),
+                            "uploader-" + dto.identifier + ".*",
+                            SearchOption.TopDirectoryOnly);
+                        //var fileUrl = await MergeChunkFiles(payload, ext, chunkFiles); 
+                        var fileUrl = await MergeChunkFiles(HttpContext, dto.uid, dto.type, ext, chunkFiles, dto.filename, dto.totalSize);
 
-        //}
+                        return ApiResponse<List<string>>.Success(new List<string> { fileUrl });
+                    }
+                    else
+                    {
+                        return new ApiResponse<List<string>> { code = 412 };
+                    }
+                }
+                catch (Exception exp)
+                {
+                    logger.LogError(exp.ToString());
+                }
+
+            }
+            catch { }
+            return new ApiResponse<List<string>> { code = 414 };
+
+        }
+        private async Task<string> MergeChunkFiles(HttpContext context, string uid, string type, string ext, string[] chunkFiles, string filenamec, long totalSize)
+        {
+            //上传逻辑
+            DateTime now = DateTime.Now;
+            string yy = now.ToString("yyyy");
+            string mm = now.ToString("MM");
+            ext = ext.ToLower();
+            string fileName = Guid.NewGuid().ToString("n") + ext;
+            var folder = Path.Combine(basePath, "upload", type, uid, yy + mm);
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+
+            var filePath = Path.Combine(folder, fileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+            {
+                foreach (var chunkFile in chunkFiles.OrderBy(x => int.Parse(x.Substring(x.LastIndexOf(".") + 1))))
+                {
+                    using (var chunkStream = System.IO.File.OpenRead(chunkFile))
+                    {
+                        await chunkStream.CopyToAsync(fileStream);
+                    }
+
+                    //是否要删除块
+                    System.IO.File.Delete(chunkFile);
+                }
+            }
+           
+            return filePath;
+        }
 
         // getParams(context, out var chunkNumber, out var chunkSize, out var totalSize, out string identifier,
         //out string filename, out int totalChunks, out string uid, out string type);
