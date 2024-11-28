@@ -208,12 +208,13 @@ namespace WebApiTest.Controllers
 
                 //后缀验证
                 var ext = Path.GetExtension(file.FileName);
+                logger.LogWarning($"basePath:{basePath}");
                 var temp = Path.Combine(basePath,"tmp");
                 if (!Directory.Exists(temp))
                 {
                     Directory.CreateDirectory(temp);
                 }
-                var chunkFilename = Path.Combine(basePath, temp, "uploader-" + dto.identifier + "." + dto.chunkNumber);
+                var chunkFilename = Path.Combine(temp, "uploader-" + dto.identifier + "." + dto.chunkNumber);
                 try
                 {
                     using (var fileStream = System.IO.File.OpenWrite(chunkFilename))
@@ -242,7 +243,7 @@ namespace WebApiTest.Controllers
 
                         //merge file;
                         string[] chunkFiles = Directory.GetFiles(
-                            Path.Combine(basePath, temp),
+                            Path.Combine(temp),
                             "uploader-" + dto.identifier + ".*",
                             SearchOption.TopDirectoryOnly);
                         //var fileUrl = await MergeChunkFiles(payload, ext, chunkFiles); 
@@ -278,9 +279,9 @@ namespace WebApiTest.Controllers
             {
                 Directory.CreateDirectory(folder);
             }
-
+            
             var filePath = Path.Combine(folder, fileName);
-
+            logger.LogWarning($"filePath:{filePath}");
             using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 foreach (var chunkFile in chunkFiles.OrderBy(x => int.Parse(x.Substring(x.LastIndexOf(".") + 1))))
